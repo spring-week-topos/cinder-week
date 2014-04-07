@@ -2814,3 +2814,68 @@ def transfer_accept(context, transfer_id, user_id, project_id):
             update({'deleted': True,
                     'deleted_at': timeutils.utcnow(),
                     'updated_at': literal_column('updated_at')})
+
+#############################################
+
+def geo_tag_get_by_node_name(context, node_name):
+    return model_query(context, models.GeoTag).\
+                       filter_by(server_name=node_name).\
+                       first()
+
+def geo_tag_get_by_id(context, gt_id):
+    return model_query(context, models.GeoTag).\
+                       filter_by(id=gt_id).\
+                       first()
+
+#(licostan) setup filter later.
+def geo_tag_get_all(context,  filters):
+    query = model_query(context, models.GeoTag)
+    if filters and 'host' in filters:
+        query = query.filter_by(server_name=filters['host'])
+        
+    return query.all()
+
+@require_admin_context
+def geo_tag_create(context, values):
+    session = get_session()
+    geo_tag = geo_tag_get_by_node_name(context, values['server_name'])
+    if not geo_tag:
+        geo_tag = models.GeoTag()
+        geo_tag.update(values)
+        geo_tag.save(session=session)
+    else:
+        raise exception.GeoTagExists(name=values['server_name'])
+    
+    return geo_tag
+
+@require_admin_context
+def geo_tag_update(context, geo_tag_id, values):
+    session = get_session()
+    #(licostan) : add id or hostname logic to find here
+    geo_tag = geo_tag_get_by_node_name(context, geo_tag_id)
+    if not geo_tag:
+        geo_tag = geo_tag_get_by_id(context, geo_tag_id)
+    
+    
+    
+    if geo_tag:
+        geo_tag.update(values)
+        geo_tag.save(session=session)
+    else:
+        raise exception.NotFound()
+    
+    return geo_tag
+
+@require_admin_context
+def geo_tag_destroy(context, geo_tag_id):
+    model_query(context, models.GeoTag).\
+                filter((models.GeoTag.id==geo_tag_id) | 
+                       (models.GeoTag.server_name==geo_tag_id)).\
+                delete()
+                
+def geo_tag_get_by_id_or_node_name(context, geo_tag_id):
+    return model_query(context, models.GeoTag).\
+                       filter((models.GeoTag.id==geo_tag_id) | 
+                       (models.GeoTag.server_name==geo_tag_id)).\
+                       first()
+    

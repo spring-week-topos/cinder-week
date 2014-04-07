@@ -70,6 +70,11 @@ class ServiceController(wsgi.Controller):
         self.ext_mgr = ext_mgr
         super(ServiceController, self).__init__()
 
+    def _get_geo_tag(self, context, server):
+        #we cannot join yet, since it can have or not 
+        #geodata the servers?
+        return db.geo_tag_get_by_node_name(context, server)
+        
     @wsgi.serializers(xml=ServicesIndexTemplate)
     def index(self, req):
         """Return a list of all running services.
@@ -81,7 +86,8 @@ class ServiceController(wsgi.Controller):
         detailed = self.ext_mgr.is_loaded('os-extended-services')
         now = timeutils.utcnow()
         services = db.service_get_all(context)
-
+        #faster access
+        geo_tags = db.geo_tag_get_all(context, None)
         host = ''
         if 'host' in req.GET:
             host = req.GET['host']
@@ -115,6 +121,11 @@ class ServiceController(wsgi.Controller):
                           'updated_at': svc['updated_at']}
             if detailed:
                 ret_fields['disabled_reason'] = svc['disabled_reason']
+                
+            if svc['binary'] == u'cinder-volume':
+                geo_tag_server = [x for x in geo_tags if x['server_name'] == svc['host']]
+                ret_fields['geo_tag'] = geo_tag_server
+                
             svcs.append(ret_fields)
         return {'services': svcs}
 

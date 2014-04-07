@@ -720,3 +720,6 @@ class BrocadeZoningCliException(CinderException):
 
 class NetAppDriverException(VolumeDriverException):
     message = _("NetApp Cinder Driver exception.")
+
+class GeoTagExists(Duplicate):
+    message = _("GeoTag for %(name)s already exists.")

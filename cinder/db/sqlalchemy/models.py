@@ -467,6 +467,46 @@ class Transfer(BASE, CinderBase):
                           'Transfer.deleted == False)')
 
 
+class GeoTag(BASE, CinderBase):
+    """Represents geotag information"""
+    __tablename__ = 'services_geotag'
+  
+    
+    id = Column(Integer, primary_key=True)
+    #(licostan): add ipv6 max
+    ip_address = Column(String(40))
+    mac_address = Column(String(17))
+    parent_mac = Column(String(17))
+    #should be covered by upated_at when using
+    #the api to change this values
+    time_data_rec = Column(String(28))
+    
+    rfid = Column(String(24))
+    rfid_signature = Column(String(10))
+    platform_guid = Column(String(32))
+    geo_loc_svr_guid = Column(String(32))
+    rfid_reader_guid = Column(String(32))
+    #create a field for this type of data , some dbs
+    #have specific columns (posgres for instance)
+    plt_latitude = Column(String(11))
+    plt_longitude = Column(String(11))
+    loc_or_error_msg = Column(String(17))
+    valid_invalid = Column(String(7))
+    rfid_scan_time = Column(String(19))
+    rfid_rec_time = Column(String(19))
+    geo_loc_valid_time = Column(String(19))
+    geo_loc_invalid_time = Column(String(19))
+    secure_geo_loc = Column(String(10))
+    auto_geo_loc = Column(String(10))
+    cable_disc_prd = Column(String(10))
+    geo_loc_server = Column(String(5))
+    node_manager = Column(String(5))
+    alerts = Column(Integer)
+    server_name = Column(String(255), nullable=False, index=True)
+
+                                   
+
+
 def register_models():
     """Register Models and create metadata.
 
@@ -485,6 +525,7 @@ def register_models():
               VolumeTypeExtraSpecs,
               VolumeTypes,
               VolumeGlanceMetadata,
+              GeoTag,
               )
     engine = create_engine(CONF.database.connection, echo=False)
     for model in models:

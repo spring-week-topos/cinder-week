@@ -816,3 +816,34 @@ def transfer_destroy(context, transfer_id):
 def transfer_accept(context, transfer_id, user_id, project_id):
     """Accept a volume transfer."""
     return IMPL.transfer_accept(context, transfer_id, user_id, project_id)
+
+#########################
+def geo_tag_destroy(context, geo_tag_id):
+    """Delete GeoTag."""
+    return IMPL.geo_tag_destroy(context, geo_tag_id)
+
+def geo_tag_get_by_node_name(context, node_name):
+    """Get GeoTag by host node name."""
+    return IMPL.geo_tag_get_by_node_name(context, node_name)
+
+def geo_tag_get_by_id(context, gt_id):
+    """Get GeoTag by id."""
+    return IMPL.geo_tag_get_by_id(context, gt_id)
+
+
+def geo_tag_get_all(context, filters):
+    """Get GeoTags."""
+    return IMPL.geo_tag_get_all(context, filters)
+
+def geo_tag_create(context, values):
+    """Create GeoTag."""
+    return IMPL.geo_tag_create(context, values)
+
+def geo_tag_update(context, geo_tag_id, values):
+    """Update GeoTag."""
+    return IMPL.geo_tag_update(context, geo_tag_id, values)
+
+def geo_tag_get_by_id_or_node_name(context, geo_tag_id):
+    """Update GeoTag."""
+    return IMPL.geo_tag_get_by_id_or_node_name(context, geo_tag_id)
+
