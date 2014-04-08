@@ -35,7 +35,9 @@ host_manager_opts = [
                 default=[
                     'AvailabilityZoneFilter',
                     'CapacityFilter',
-                    'CapabilitiesFilter'
+                    'CapabilitiesFilter',
+                    #(licostan): Remove after POC
+                    'GeoTagsFilter'
                 ],
                 help='Which filter class names to use for filtering hosts '
                      'when not specified in the request.'),
