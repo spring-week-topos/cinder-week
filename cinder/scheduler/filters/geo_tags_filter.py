@@ -38,7 +38,7 @@ class GeoTagsFilter(filters.BaseHostFilter):
             LOG.info('NO GEO TAG FOUND FOR %s' % host_state.host)
             return True
         #do other geotags check here based on gt-hints
-        if geo_tag.valid_invalid.lower() == 'valid':
+        if geo_tag['valid_invalid'].lower() == 'valid':
             LOG.info('GEO TAG FOUND FOR %s' % host_state.host)
             return True
 
