@@ -14,18 +14,13 @@
 
 """The GeoTag API extension."""
 
-import datetime
 from oslo.config import cfg
 
 from webob import exc
 from cinder.api import extensions
-from cinder.api.openstack import wsgi
 from cinder import db
 from cinder import exception
 from cinder.openstack.common import log as logging
-from cinder.openstack.common import strutils
-from cinder import rpc
-from cinder import volume
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -40,20 +35,21 @@ def _get_context(req):
 class GeoTagsController(object):
     """The GeoTag API controller for the OpenStack API."""
     allowed_keys = ['plt_longitude', 'plt_latitude', 'valid_invalid']
-    
+
     def __init__(self):
         super(GeoTagsController, self).__init__()
 
     def _check_keys(self, values):
         for key in values.keys():
             if key not in self.allowed_keys:
-                raise exc.HTTPBadRequest(explanation="Invalid keys")
+                raise exc.HTTPBadRequest(explanation="Invalid keys " + key)
 
     def index(self, req):
         """Returns all geo tags."""
         context = _get_context(req)
         authorize(context)
         filters = None
+        #TODO: host filter not working.
         if 'host' in req.GET:
             filters = {'host': req.GET['host']}
         gt = db.geo_tag_get_all(context, filters)
@@ -73,13 +69,14 @@ class GeoTagsController(object):
             compute_name = geo_tag.pop("compute_name")
         except KeyError:
             raise exc.HTTPBadRequest()
-        
+
         self._check_keys(geo_tag)
         try:
-            db.service_get_by_host_and_topic(context, compute_name, CONF.volume_topic)
+            db.service_get_by_host_and_topic(context, compute_name,
+                                             CONF.volume_topic)
         except exception.ServiceNotFound:
             raise exc.HTTPNotFound(explanation=_("Host not found"))
-                                                                                                                                                         
+
         try:
             #(licostan) only in this case we add it again..
             #need to adapt this to a proper db api for cinder...
@@ -104,17 +101,16 @@ class GeoTagsController(object):
         except exception.AggregateNotFound:
             LOG.info(_("Cannot shw GeoTag:  %s"), id)
             raise exc.HTTPNotFound()
-        
+
         return {'geo_tag': geo_tag}
-        
+
     def update(self, req, id, body):
         """Update geotag by server_name right now.
-           id  == server_name 
+           id  == server_name
         """
-    
         context = _get_context(req)
         authorize(context)
-    
+
         if len(body) != 1:
             raise exc.HTTPBadRequest()
         try:
@@ -136,7 +132,7 @@ class GeoTagsController(object):
             raise exc.HTTPNotFound(explanation=e.format_message())
 
         return {'geo_tag': geo_tag}
-        
+
     def delete(self, req, id):
         """Removes a GeoTag by id/servername."""
         context = _get_context(req)
@@ -158,7 +154,6 @@ class Geo_tags(extensions.ExtensionDescriptor):
 
     def get_resources(self):
         resources = []
-        res = extensions.ResourceExtension('os-geo-tags',
-                GeoTagsController())
+        res = extensions.ResourceExtension('os-geo-tags', GeoTagsController())
         resources.append(res)
         return resources

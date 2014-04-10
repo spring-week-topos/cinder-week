@@ -90,3 +90,21 @@ class HostFiltersTestCase(test.TestCase):
                                     'updated_at': None,
                                     'service': service})
         self.assertTrue(filt_cls.host_passes(host, filter_properties))
+
+    @mock.patch('cinder.db.geo_tag_get_by_node_name')
+    def test_geo_tags_filter_no_list_passes(self, geo_tag_mock):
+        geo_tag_mock.return_value = {'valid_invalid': 'Invalid'}
+
+        filt_cls = self.class_map['GeoTagsFilter']()
+        host = fakes.FakeHostState('host1', {})
+        filter_properties = {'context': self.context.elevated()}
+        self.assertFalse(filt_cls.host_passes(host, filter_properties))
+
+    @mock.patch('cinder.db.geo_tag_get_by_node_name')
+    def test_geo_tags_filter_valid_passes(self, geo_tag_mock):
+        geo_tag_mock.return_value = {'valid_invalid': 'Valid'}
+
+        filt_cls = self.class_map['GeoTagsFilter']()
+        host = fakes.FakeHostState('host1', {})
+        filter_properties = {'context': self.context.elevated()}
+        self.assertTrue(filt_cls.host_passes(host, filter_properties))
