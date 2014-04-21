@@ -14,6 +14,8 @@
 #    under the License.
 
 from cinder import db
+
+from cinder.openstack.common import jsonutils
 from cinder.openstack.common import log as logging
 from cinder.openstack.common.scheduler import filters
 
@@ -24,23 +26,48 @@ LOG = logging.getLogger(__name__)
 class GeoTagsFilter(filters.BaseHostFilter):
     """GeoTags Filter."""
 
+    def _is_valid_rack_loc(self, host_rack, wanted_rack):
+        rack_aff = zip(wanted_rack.split('-'), host_rack.split('-'))
+        for x, v in rack_aff:
+            if x != v:
+                return False
+        return True
+
     def host_passes(self, host_state, filter_properties):
         """Return True if host has sufficient capacity."""
         #(licostan): Add geotag data to the host_state instead of
         #querying it...
         #TODO: add scheduler hints to cinder.
         metadata_hints = filter_properties.get('metadata') or {}
-        gt_hints = metadata_hints.get('geo_tags', None)
         context = filter_properties['context']
 
+        try:
+            gt_hints = jsonutils.loads(metadata_hints.get('geo_tags',
+                                                          '{}'))
+        except Exception as e:
+            LOG.error('Cannot parse json gtags %s' % gt_hints)
+            return False
+
+        #for non geo tags servers
         geo_tag = db.geo_tag_get_by_node_name(context, host_state.host)
         if not geo_tag:
             LOG.info('NO GEO TAG FOUND FOR %s' % host_state.host)
             return True
-        #do other geotags check here based on gt-hints
-        if geo_tag['valid_invalid'].lower() == 'valid':
-            LOG.info('GEO TAG FOUND FOR %s' % host_state.host)
-            return True
 
-        LOG.info('GEO TAG INVALID FOR  %s' % host_state.host)
-        return False
+        #do other geotags check here based on gt-hints
+        if geo_tag['valid_invalid'].lower() != 'valid':
+            LOG.info('GEO TAG Invalid for %s' % host_state.host)
+            return False
+
+        wanted_rack = gt_hints.get('rack_location', None)
+        host_loc = geo_tag.get('loc_or_error_msg')
+        print wanted_rack
+        print host_loc
+        if wanted_rack and not self._is_valid_rack_loc(host_loc, wanted_rack):
+            LOG.info('Invalid rack location wanted: %(want)s '
+                     ' host_loc: %(host_loc)s' % {'want': wanted_rack,
+                                                  'host_loc': host_loc})
+            return False
+
+        LOG.info('GEO TAG VALID FOR  %s' % host_state.host)
+        return True

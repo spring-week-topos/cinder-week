@@ -34,7 +34,8 @@ def _get_context(req):
 
 class GeoTagsController(object):
     """The GeoTag API controller for the OpenStack API."""
-    allowed_keys = ['plt_longitude', 'plt_latitude', 'valid_invalid']
+    allowed_keys = ['plt_longitude', 'plt_latitude', 'valid_invalid',
+                    'loc_or_error_msg']
 
     def __init__(self):
         super(GeoTagsController, self).__init__()
