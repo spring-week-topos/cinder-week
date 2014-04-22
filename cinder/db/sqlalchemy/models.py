@@ -502,6 +502,7 @@ class GeoTag(BASE, CinderBase):
     geo_loc_server = Column(String(5))
     node_manager = Column(String(5))
     alerts = Column(Integer)
+    power_state = Column(String(50))
     server_name = Column(String(255), nullable=False, index=True)
 
                                    
