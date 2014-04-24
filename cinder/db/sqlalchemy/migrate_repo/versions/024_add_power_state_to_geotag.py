@@ -24,7 +24,6 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy import Text
 
-from nova.openstack.common import timeutils
 
 
 def upgrade(engine):

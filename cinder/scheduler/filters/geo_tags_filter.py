@@ -27,8 +27,13 @@ class GeoTagsFilter(filters.BaseHostFilter):
     """GeoTags Filter."""
 
     def _is_valid_rack_loc(self, host_rack, wanted_rack):
-        rack_aff = zip(wanted_rack.split('-'), host_rack.split('-'))
+        wanted = wanted_rack.split('-')
+        host = host_rack.split('-')
+        if not wanted[-1]:
+            wanted.pop()
+        rack_aff = zip(wanted, host)
         for x, v in rack_aff:
+            #may be empty due to to split
             if x != v:
                 return False
         return True
@@ -61,8 +66,6 @@ class GeoTagsFilter(filters.BaseHostFilter):
 
         wanted_rack = gt_hints.get('rack_location', None)
         host_loc = geo_tag.get('loc_or_error_msg')
-        print wanted_rack
-        print host_loc
         if wanted_rack and not self._is_valid_rack_loc(host_loc, wanted_rack):
             LOG.info('Invalid rack location wanted: %(want)s '
                      ' host_loc: %(host_loc)s' % {'want': wanted_rack,

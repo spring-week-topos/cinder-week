@@ -91,6 +91,35 @@ class HostFiltersTestCase(test.TestCase):
                                     'service': service})
         self.assertTrue(filt_cls.host_passes(host, filter_properties))
 
+    def _test_geo_tags_filter(self, gtag, wanted,
+                              host_passes=False):
+        geo_tag_mock = mock.Mock('cinder.db.geo_tag_get_by_node_name')
+        geo_tag_mock.return_value = {'valid_invalid': 'Valid',
+                                     'loc_or_error_msg': gtag}
+
+        filt_cls = self.class_map['GeoTagsFilter']()
+        host = fakes.FakeHostState('host1', {})
+
+        wanted_tags = '{"rack_location": "%s"}' % wanted
+        filter_properties = {'context': self.context.elevated(),
+                             'metadata': {'geo_tags': wanted_tags}}
+        if host_passes:
+            self.assertTrue(filt_cls.host_passes(host, filter_properties))
+        else:
+            self.assertFalse(filt_cls.host_passes(host, filter_properties))
+
+    def test_geo_tags_filter_valid_rack(self):
+        ok_locations = ['1-2-3-4-5', '1-2-3-4', '1-2-3-4-',
+                        '1-2-3', '1-2', '1-', '1']
+        for x in ok_locations:
+            self._test_geo_tags_filter('1-2-3-4-5', x, True)
+
+    def test_geo_tags_filter_invalid_rack(self):
+        ok_locations = ['1-2-3-4-3', '1-2-3-2', '1-2-3-1-',
+                        '1-5-3', '3-2', '2-', '2']
+        for x in ok_locations:
+            self._test_geo_tags_filter('1-2-3-4-5', x, True)
+
     @mock.patch('cinder.db.geo_tag_get_by_node_name')
     def test_geo_tags_filter_no_list_passes(self, geo_tag_mock):
         geo_tag_mock.return_value = {'valid_invalid': 'Invalid'}
@@ -107,28 +136,4 @@ class HostFiltersTestCase(test.TestCase):
         filt_cls = self.class_map['GeoTagsFilter']()
         host = fakes.FakeHostState('host1', {})
         filter_properties = {'context': self.context.elevated()}
-        self.assertTrue(filt_cls.host_passes(host, filter_properties))
-
-    @mock.patch('cinder.db.geo_tag_get_by_node_name')
-    def test_geo_tags_filter_rack_fail(self, geo_tag_mock):
-        geo_tag_mock.return_value = {'valid_invalid': 'Valid',
-                                     'loc_or_error_msg': '1-2-3-4'}
-        filt_cls = self.class_map['GeoTagsFilter']()
-        host = fakes.FakeHostState('host1', {})
-
-        filter_properties = {'context': self.context.elevated(),
-                             'metadata': {'geo_tags':
-                                          '{"rack_location": "1-3-4"}'}}
-        self.assertFalse(filt_cls.host_passes(host, filter_properties))
-
-    @mock.patch('cinder.db.geo_tag_get_by_node_name')
-    def test_geo_tags_filter_rack_passes(self, geo_tag_mock):
-        geo_tag_mock.return_value = {'valid_invalid': 'Valid',
-                                     'loc_or_error_msg': '1-2-3-4'}
-        filt_cls = self.class_map['GeoTagsFilter']()
-        host = fakes.FakeHostState('host1', {})
-
-        filter_properties = {'context': self.context.elevated(),
-                             'metadata': {'geo_tags':
-                                          '{"rack_location": "1-2-3-4"}'}}
         self.assertTrue(filt_cls.host_passes(host, filter_properties))
